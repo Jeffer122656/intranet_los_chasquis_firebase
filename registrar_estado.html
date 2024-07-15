@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado de Cuenta</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Estilos personalizados -->
+    <!-- Firebase SDK y scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10.15.7/dist/sweetalert2.min.css">
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10.15.7/dist/sweetalert2.all.min.js"></script>
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css">
+    <link rel="stylesheet" type="text/css"
+        href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.dataTables.css">
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/responsive.dataTables.js"></script>
+
+    <script src="config.js"></script>
+    <script src="menu/menu.js"></script>
+    <script>
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        // Referencia a la base de datos de Firebase
+        const database = firebase.database();
+        const usersRef = database.ref('users');
+        const estadoRef = database.ref('estadoCuentas');
+    </script>
+
+    <script src="sesion/sesion_admin.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row min-vh-100">
+            <!-- Barra lateral -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
+                <div class="position-sticky">
+                    <!-- Encabezado del menú -->
+                    <div class="px-3 py-4 d-flex flex-column align-items-center justify-content-center">
+                        <div class="avatar rounded-circle mb-3" style="background-color: #7eaddf; color: #fff; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold;">
+                            <div class="text-light fs-2" id="user_alias">-</div> <!-- Aquí puedes poner las iniciales de tu nombre de usuario -->
+                        </div>
+                        <div class="text-light fs-6" id="username">Nombre de Usuario</div>
+                    </div> 
+                    <!-- Fin del encabezado -->
+
+                    <!-- Lista de enlaces -->
+                    <div id="menu" class="list-group list-group-flush">
+                        <a class="list-group-item list-group-item-action bg-dark text-white">Cargando...</a>
+                    </div>
+                </div>
+            </nav>
+
+
+            <!-- Contenido principal -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-12 content-wrapper">
+                <div class="pt-3 pb-2 mb-3 border-bottom" style="margin-right: 10px; margin-left:10px">
+                    <h1 class="h2">Estado de Cuenta</h1>
+                </div>
+                <div class="row" style="margin-right: 10px; margin-left:10px">
+                    <div class="col">
+                        <h6>Lista de estados de cuenta:</h6>
+                        <div class="d-flex">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#exampleModal" style="margin-left: auto; margin-bottom: 5px;">
+                                Registrar
+                            </button>
+                        </div>
+
+                        <div class="table-responsive" style="width: 100%;">
+                            <table id="estadoTable" class="table table-striped table-bordered text-center align-middle">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">Fecha Registro</th>
+                                        <th class="text-center">Nombres y Apellidos</th>
+                                        <th class="text-center">Documento</th>
+                                        <th class="text-center">Puesto</th>
+                                        <th class="text-center">Fecha Inicio</th>
+                                        <th class="text-center">Fecha Fin</th>
+                                        <th class="text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Aquí se insertarán los datos de los usuarios -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Modal Registrar -->
+            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">Registrar Estado de Cuenta</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            
+                             <div class="mb-3">
+                                    <label for="nombres_completo">Nombres Completos</label>
+                                    <select id="nombres_completo" class="form-control">
+                                        <option value="">Seleccione</option>
+                                      </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="puesto">Puesto</label>
+                                    <input type="text" id="puesto" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="fecha_inicio">Fecha Inicio</label>
+                                    <input type="date" id="fecha_inicio" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="fecha_fin">Fecha Fin</label>
+                                    <input type="date" id="fecha_fin" class="form-control" required>
+                                </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-primary" id="registrarEstado">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal de Edición -->
+            <div class="modal fade" id="editarModal" tabindex="-1" role="dialog" aria-labelledby="editarModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editarModalLabel">Editar Estado</h5>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="modalEmail">Nombres y Apellidos</label>
+                                <input type="text" class="form-control" id="modalNombre" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label for="modalDisplayName">Documento</label>
+                                <input type="text" class="form-control" id="modalDocumento" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label for="modalDisplayName">Puesto</label>
+                                <input type="text" class="form-control" id="modalPuesto" placeholder="Documento">
+                            </div>
+                            <div class="form-group">
+                                <label for="modalDisplayName">Fecha Inicio</label>
+                                <input type="text" class="form-control" id="modalFinicio" placeholder="Estado">
+                            </div>
+                            <div class="form-group">
+                                <label for="modalDisplayName">Fecha Inicio</label>
+                                <input type="text" class="form-control" id="modalFfin" placeholder="Tipo">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-primary" id="guardarCambios">Guardar Cambios</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- Bootstrap JavaScript y scripts adicionales -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+        
+    <script>
+        // Al cargar el documento
+        $(document).ready(function () {
+            
+            // Función para cargar usuarios en el select
+            function cargarUsuarios() {
+                usersRef.orderByChild('displayName').once('value', function(snapshot) {
+                    // Limpiar opciones actuales del select
+                    $('#nombres_completo').empty();
+                    $('#nombres_completo').append('<option value="">Seleccione</option>');
+
+                    // Iterar sobre cada usuario y agregarlo como opción en el select
+                    snapshot.forEach(function(childSnapshot) {
+                        var userId = childSnapshot.key; // Obtener el ID del registro
+                        var displayName = childSnapshot.child('displayName').val(); // Obtener el nombre
+
+                        // Agregar opción al select con el ID como value y displayName como texto
+                        $('#nombres_completo').append('<option value="' + userId + '">' + displayName + '</option>');
+                    });
+                });
+            }
+            //Mostrar usuarios en select
+            cargarUsuarios();
+
+
+            // Configuración y carga de DataTable
+            const table = $('#estadoTable').DataTable({
+                "responsive": true,
+                "language": {
+                    "decimal": "",
+                    "emptyTable": "No hay información",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ Registros",
+                    "infoEmpty": "Mostrando 0 to 0 of 0 Registros",
+                    "infoFiltered": "(Filtrado de _MAX_ total Registros)",
+                    "infoPostFix": "",
+                    "thousands": ",",
+                    "lengthMenu": "Mostrar _MENU_ Registros",
+                    "loadingRecords": "Cargando...",
+                    "processing": "Procesando...",
+                    "search": "Buscar:",
+                    "zeroRecords": "Sin resultados encontrados",
+                    "paginate": {
+                        "first": "Primero",
+                        "last": "Ultimo",
+                        "next": "Siguiente",
+                        "previous": "Anterior"
+                    }
+                },
+                "pageLength": 10,
+                "lengthMenu": [[5, 10, 20, -1], [5, 10, 20, 'Todos']],
+                "columns": [
+                    { "data": "fecha_registro" },
+                    { "data": "nombres_completo" },
+                    {
+                        "data": "documento",
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "puesto",
+                        "className": "text-center"
+                    },
+                    { "data": "fecha_inicio",
+                    "className": "text-center" },
+                    { "data": "fecha_fin",
+                    "className": "text-center" },
+                    { 
+                    "defaultContent": `<button class='editar btn btn-primary' data-toggle='modal' data-target='#editarModal'>${iconoEditar}</button> 
+                                       <button class='imprimir btn btn-success'>${iconoImprimir}</button>
+                                       <button class='eliminar btn btn-danger'>${iconoEliminar}</button>` 
+                    }]
+            });
+
+            // Cargar datos desde Firebase a la tabla datatable
+            function cargarDatos() {
+                estadoRef.once('value', function (snapshot) {
+                    // Limpiar la tabla antes de cargar nuevos datos
+                    table.clear().draw();
+
+                    if (snapshot.exists()) {
+                        snapshot.forEach(function (childSnapshot) {
+                            var key = childSnapshot.key;
+                            var nombres_completo = childSnapshot.child('nombres_completo').val();
+                            var documento = childSnapshot.child('documento').val();
+                            var puesto = childSnapshot.child('puesto').val();
+                            var fecha_inicio = childSnapshot.child('fecha_inicio').val();
+                            var fecha_fin = childSnapshot.child('fecha_fin').val();
+                            var fecha_registro = childSnapshot.child('fecha_registro').val();
+
+                            // Agregar fila al DataTable
+                            table.row.add({
+                                "key": key,
+                                "fecha_registro": fecha_registro,
+                                "nombres_completo": nombres_completo,
+                                "documento": documento,
+                                "puesto": puesto,
+                                "fecha_inicio": fecha_inicio,
+                                "fecha_fin": fecha_fin
+                            }).draw();
+
+                        });
+                    }
+                });
+            }
+
+            // Cargar los datos inicialmente
+            cargarDatos();
+
+            // Escuchar clics en botones de editar, eliminar y imprimir
+            $('#estadoTable').on('click', 'button.editar', function () {
+                var data = table.row($(this).parents('tr')).data();
+                // Mostrar el modal de edición
+                $('#editarModal').modal('show');
+
+                // Mostrar los datos del usuario en el modal
+                $('#modalNombre').val(data.nombres_completo);
+                $('#modalDocumento').val(data.documento);
+                $('#modalPuesto').val(data.puesto);
+                $('#modalFinicio').val(data.fecha_inicio);
+                $('#modalFfin').val(data.fecha_fin);
+
+                // Guardar el ID del usuario en un atributo del botón de guardar
+                $('#guardarCambios').data('userid', data.key);
+            });
+
+            $('#estadoTable').on('click', 'button.eliminar', function () {
+                var data = table.row($(this).parents('tr')).data();
+
+                // Obtener el ID del usuario a eliminar
+                var usuarioId = data.key;
+
+                // Mostrar SweetAlert2 para confirmar la eliminación
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "¡No podrás revertir esto!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, eliminarlo!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Eliminar el usuario de Firebase
+                        estadoRef.child(usuarioId).remove()
+                            .then(function () {
+                                // Mostrar mensaje de éxito con SweetAlert2
+                                Swal.fire(
+                                    '¡Eliminado!',
+                                    'El registro ha sido eliminado correctamente.',
+                                    'success'
+                                );
+                                // Actualizar la tabla después de eliminar el usuario
+                                cargarDatos();
+                            })
+                            .catch(function (error) {
+                                console.error("Error al eliminar el usuario:", error);
+                                // Mostrar mensaje de error con SweetAlert2
+                                Swal.fire(
+                                    '¡Error!',
+                                    'Ha ocurrido un error al intentar eliminar el registro.',
+                                    'error'
+                                );
+                            });
+                    }
+                });
+            });
+
+            $('#estadoTable').on('click', 'button.imprimir', function () {
+                // Crear un nuevo evento de teclado
+                var ctrlKeyDownEvent = new KeyboardEvent('keydown', {
+                    key: 'Control',     // La tecla que queremos simular es Ctrl
+                    code: 'ControlLeft', // El código de la tecla (puede variar según el navegador)
+                    ctrlKey: true,      // Indicar que la tecla Ctrl está presionada
+                    shiftKey: false,    // Asegurar que Shift no esté presionado
+                    altKey: false,      // Asegurar que Alt no esté presionado
+                    metaKey: false,     // Asegurar que la tecla Meta (Command en Mac) no esté presionada
+                });
+
+                // Presionamos la tecla ctrl para que funcione bien la carga al PDF
+                document.dispatchEvent(ctrlKeyDownEvent);
+
+                var data = table.row($(this).parents('tr')).data();
+                // Obtener el ID del usuario a eliminar
+                var estadoId = data.key;
+                var nombres_completo= data.nombres_completo;
+                var documento= data.documento;
+                var puesto= data.puesto;
+                var fecha_inicio= data.fecha_inicio;
+                var fecha_fin= data.fecha_fin;
+
+                // Crear un nuevo documento PDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                // Título centrado
+                doc.setFontSize(16);
+                doc.text("Estado de Cuenta Mercado los Chasquis", doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
+
+                // Posición inicial para los detalles
+                let yPos = 30;
+
+                // Agregar contenido al PDF con saltos de línea
+                doc.setFontSize(12);
+                doc.text(`Nombre: ${nombres_completo}`, 10, yPos);
+                yPos += 10; // Incrementar la posición Y
+                doc.text(`Documento: ${documento}`, 10, yPos);
+                yPos += 10; // Incrementar la posición Y
+                doc.text(`Puesto: ${puesto}`, 10, yPos);
+                yPos += 10; // Incrementar la posición Y
+                doc.text(`Fecha de inicio: ${fecha_inicio}`, 10, yPos);
+                yPos += 10; // Incrementar la posición Y
+                doc.text(`Fecha de fin: ${fecha_fin}`, 10, yPos);
+
+                // Obtener el PDF como un Blob
+                const pdfBlob = doc.output('blob');
+
+                // Crear una URL para el Blob
+                const url = URL.createObjectURL(pdfBlob);
+
+                // Intentar abrir el PDF en una nueva ventana/tab
+                try {
+                    window.open(url, '_blank');
+                } catch (error) {
+                    console.error("Error al abrir el PDF:", error);
+                }
+
+                // Liberar el objeto URL creado
+                URL.revokeObjectURL(url);
+                
+            });
+
+            // Registrar desde el modal de edición
+            $('#registrarEstado').click(function () {
+                var id_nombres_completo = $('#nombres_completo').val();
+                var puesto = $('#puesto').val();
+                var fecha_inicio = $('#fecha_inicio').val();
+                var fecha_fin = $('#fecha_fin').val();
+
+                // Validar que todos los campos obligatorios estén llenos
+                if (id_nombres_completo === '' || puesto === '' || fecha_inicio === '' || fecha_fin === '') {
+                    // Mostrar mensaje de error con SweetAlert2
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Campos vacíos',
+                        text: 'Por favor completa todos los campos obligatorios.',
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'Aceptar'
+                    });
+                    return; // Detener la ejecución de la función
+                }
+                
+                // Obtener la fecha actual
+                const currentDate = new Date();
+
+                // Obtener día, mes y año
+                const day = String(currentDate.getDate()).padStart(2, '0');
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                const year = currentDate.getFullYear();
+
+                // Obtener hora, minutos y segundos
+                const hours = String(currentDate.getHours()).padStart(2, '0');
+                const minutes = String(currentDate.getMinutes()).padStart(2, '0');
+                const seconds = String(currentDate.getSeconds()).padStart(2, '0');
+
+                // Formatear la fecha como dd-mm-yyyy hh:mm:ss
+                const formattedDate = `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+
+
+                // Variable para almacenar el displayName
+                let nombres_completo = '';
+                let documento = '';
+
+                // Obtener variables del usuario seleccionado
+                usersRef.child(id_nombres_completo).once('value')
+                    .then(snapshot => {
+                        nombres_completo = snapshot.child('displayName').val();
+                        documento = snapshot.child('dni').val();
+                        // Crear un objeto con los datos a guardar
+                        const estadoCuenta = {
+                            id_user: id_nombres_completo,
+                            nombres_completo: nombres_completo,
+                            documento: documento,
+                            puesto: puesto,
+                            fecha_inicio: fecha_inicio,
+                            fecha_fin: fecha_fin,
+                            fecha_registro: formattedDate
+                        };
+
+                        // Generar una nueva clave para el registro
+                        const newEstadoCuentaKey = database.ref().child('estadoCuentas').push().key;
+
+                        // Guardar los datos en la base de datos
+                        const updates = {};
+                        updates['/estadoCuentas/' + newEstadoCuentaKey] = estadoCuenta;
+
+                        return database.ref().update(updates);
+                    })
+                .then(() => {
+                    // Mostrar SweetAlert2 cuando se registre correctamente
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Registro exitoso',
+                        text: 'El estado de cuenta se ha registrado correctamente',
+                        showConfirmButton: false,
+                        timer: 1500  // Cierra automáticamente después de 1.5 segundos
+                    });
+                    // Cargar los datos inicialmente
+                    cargarDatos();
+                    // Cerrar el modal después de mostrar el mensaje
+                    $('#exampleModal').modal('hide');
+                })
+                .catch(error => {
+                console.error('Error al registrar el estado de cuenta:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Hubo un error al intentar guardar el estado de cuenta'
+                });
+                });
+
+                
+            });
+
+            // Guardar cambios desde el modal de edición
+            $('#guardarCambios').click(function () {
+                var usuarioId = $(this).data('userid');
+                var nuevoNombre = $('#modalNombre').val();
+                var nuevoDocumento= $('#modalDocumento').val();
+                var nuevoPuesto = $('#modalPuesto').val();
+                var nuevoFinicio = $('#modalFinicio').val();
+                var nuevoFfin = $('#modalFfin').val();
+
+                // Actualizar datos en Firebase
+                estadoRef.child(usuarioId).update({
+                    nombres_completo: nuevoNombre,
+                    documento: nuevoDocumento,
+                    puesto: nuevoPuesto,
+                    fecha_inicio: nuevoFinicio,
+                    fecha_fin: nuevoFfin
+                }).then(function () {
+                    // Cerrar el modal de edición
+                    $('#editarModal').modal('hide');
+                    // Actualizar la tabla después de editar el usuario
+                    cargarDatos();
+                    Swal.fire(
+                        '¡Editado!',
+                        'El estado ha sido editado correctamente.',
+                        'success'
+                    );
+                }).catch(function (error) {
+                    console.error("Error al actualizar el usuario:", error);
+                    // Mostrar mensaje de error con SweetAlert2
+                    Swal.fire(
+                        '¡Error!',
+                        'Ha ocurrido un error al intentar actualizar el usuario.',
+                        'error'
+                    );
+                });
+            });
+
+            // Limpiar campos del modal al cerrar
+            $('#editarModal').on('hidden.bs.modal', function (e) {
+                $('#modalNombre').val('');
+                $('#modalDocumento').val('');
+                $('#modalPuesto').val('');
+                $('#modalFinicio').val('');
+                $('#modalFfin').val('');
+            });
+
+        });
+        
+      </script>
+
+</body>
+
+</html>

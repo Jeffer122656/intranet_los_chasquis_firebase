@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuario</title>
+    <!-- Incluye Firebase SDK -->
+    <style>
+        /* Estilos CSS del formulario de login */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 40px 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .login-container h1 {
+            margin-bottom: 24px;
+            color: #333;
+            font-size: 24px;
+        }
+
+        .login-container input[type="text"],
+        .login-container input[type="email"],
+        .login-container input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 30px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .login-container input[type="text"]:focus,
+        .login-container input[type="email"]:focus,
+        .login-container input[type="password"]:focus {
+            border-color: #ff7e5f;
+        }
+
+        .login-container input[type="submit"] {
+            width: 100%;
+            padding: 15px;
+            background: #ff7e5f;
+            border: none;
+            border-radius: 30px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .login-container input[type="submit"]:hover {
+            background: #eb6d48;
+        }
+
+        .login-container p {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .login-container p a {
+            color: #ff7e5f;
+            text-decoration: none;
+        }
+
+        .login-container p a:hover {
+            text-decoration: underline;
+        }
+
+        #signupForm {
+            max-width: 300px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        #signupForm input,
+        #signupForm button {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        
+        #signupForm button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        #signupForm button:hover {
+            background-color: #0056b3;
+        }
+        
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="config.js"></script>
+    <script>
+        
+        // Inicializa Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // Función para registrar usuario
+        function signUpWithEmailAndPassword(email, password, displayName,dni) {
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Registro exitoso
+                    const user = userCredential.user;
+                    // Guarda información adicional en la base de datos
+                    database.ref('users/' + user.uid).set({
+                        email: email,
+                        displayName: displayName,
+                        createdAt: new Date().toISOString(),
+                        dni: dni,
+                        estado:'1',
+                        tipo:'0'
+                    });
+                    alert('¡Registro exitoso!');
+                    // Puedes redirigir al usuario a otra página aquí si es necesario
+                    // Limpiar el formulario después del registro exitoso
+                    document.getElementById('email').value = '';
+                    document.getElementById('password').value = '';
+                    document.getElementById('displayName').value = '';
+                    document.getElementById('dni').value = '';
+                })
+                .catch((error) => {
+                    // Error en el registro
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    console.error('Error al registrar:', errorMessage);
+                    alert(`Error: ${errorMessage}`);
+                });
+        }
+    </script>
+</head>
+<body>
+
+    <div class="login-container">
+        <h1>Registro Usuarios</h1>
+        <div id="signupForm">
+            <input type="email" id="email" placeholder="Correo electrónico" required><br>
+            <input type="password" id="password" placeholder="Contraseña" required><br>
+            <input type="text" id="dni" placeholder="Ingrese dni" required><br>
+            <input type="text" id="displayName" placeholder="Nombre de usuario" required><br>
+            <button onclick="signUpWithEmailAndPassword(email.value, password.value, displayName.value, dni.value)"  class="btn btn-primary">Registrarse</button>
+            <p><a href="index.html">Volver</a></p>
+        </div>
+    </div>
+    
+</body>
+</html>

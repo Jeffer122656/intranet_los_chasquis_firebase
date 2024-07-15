@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Estilos personalizados -->
+    <!-- Firebase SDK y scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10.15.7/dist/sweetalert2.min.css">
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10.15.7/dist/sweetalert2.all.min.js"></script>
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.dataTables.css">
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/responsive.dataTables.js"></script>
+
+    <script src="config.js"></script>
+    <script src="menu/menu.js"></script>
+    <script>
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // Referencia a la base de datos de Firebase
+        const database = firebase.database();
+        const usersRef = database.ref('users');
+        
+        // Al cargar el documento
+        $(document).ready(function() {
+            // Referencia a la tabla 'users'
+            // Configuración y carga de DataTable
+            const table =  $('#usersTable').DataTable({
+                "responsive": true,
+                "language": {
+                    "decimal": "",
+                    "emptyTable": "No hay información",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ Registros",
+                    "infoEmpty": "Mostrando 0 to 0 of 0 Registros",
+                    "infoFiltered": "(Filtrado de _MAX_ total Registros)",
+                    "infoPostFix": "",
+                    "thousands": ",",
+                    "lengthMenu": "Mostrar _MENU_ Registros",
+                    "loadingRecords": "Cargando...",
+                    "processing": "Procesando...",
+                    "search": "Buscar:",
+                    "zeroRecords": "Sin resultados encontrados",
+                    "paginate": {
+                        "first": "Primero",
+                        "last": "Ultimo",
+                        "next": "Siguiente",
+                        "previous": "Anterior"
+                    }
+                },
+                "pageLength": 10,
+                "lengthMenu": [[5, 10, 20, -1], [5, 10, 20, 'Todos']],
+                "columns": [
+                    { "data": "email" },
+                    { "data": "displayName" },
+                    { "data": "dni",
+                    "className": "text-center"  },
+                    {
+                        "data": "estado",
+                        "render": function (data, type, row, meta) {
+                            return data === '1' ? 'INACTIVO' : 'ACTIVO';
+                        }
+                    },
+                    {
+                        "data": "tipo",
+                        "render": function (data, type, row, meta) {
+                            return data === '0' ? 'USUARIO' : 'ADMINISTRADOR';
+                        }
+                    },
+                    {
+                        "data": "createdAt",
+                        "render": function (data, type, row, meta) {
+                            if (type === 'display' && data) {
+                                // Convertir el timestamp a una fecha
+                                const date = new Date(data);
+                                const day = String(date.getDate()).padStart(2, '0');
+                                const month = String(date.getMonth() + 1).padStart(2, '0'); // Enero es 0!
+                                const year = date.getFullYear();
+                                const hours = String(date.getHours()).padStart(2, '0');
+                                const minutes = String(date.getMinutes()).padStart(2, '0');
+                                const seconds = String(date.getSeconds()).padStart(2, '0');
+        
+                                // Formato dd-mm-yyyy hh:mm:ss
+                                return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+                            }
+                            return data; // En caso de no estar en modo display, devuelve el dato original
+                        }
+                    },
+                    { 
+                    "defaultContent": `<button class='editar btn btn-primary' data-toggle='modal' data-target='#editarModal'>${iconoEditar}</button> <button class='eliminar btn btn-danger'>${iconoEliminar}</button>` 
+                    }]
+            });
+
+            // Cargar datos desde Firebase
+            function cargarDatos() {
+            usersRef.once('value', function(snapshot) {
+                // Limpiar la tabla antes de cargar nuevos datos
+                table.clear().draw();
+
+                if (snapshot.exists()) {
+                snapshot.forEach(function(childSnapshot) {
+                    var key = childSnapshot.key;
+                    var email = childSnapshot.child('email').val();
+                    var displayName = childSnapshot.child('displayName').val();
+                    var dni = childSnapshot.child('dni').val();
+                    var estado = childSnapshot.child('estado').val();
+                    var tipo = childSnapshot.child('tipo').val();
+                    var createdAt = childSnapshot.child('createdAt').val();
+                    
+                    // Agregar fila al DataTable
+                    table.row.add({
+                    "key": key,
+                    "email": email,
+                    "displayName": displayName,
+                    "dni": dni,
+                    "estado": estado,
+                    "tipo": tipo,
+                    "createdAt": createdAt
+                    }).draw();
+
+                });
+                }
+            });
+            }
+
+            // Cargar los datos inicialmente
+            cargarDatos();
+            
+            // Escuchar clics en botones de editar y eliminar
+            $('#usersTable').on('click', 'button.editar', function() {
+                var data = table.row($(this).parents('tr')).data();
+                
+                // Mostrar el modal de edición
+                $('#editarModal').modal('show');
+                
+                // Mostrar los datos del usuario en el modal
+                $('#modalEmail').val(data.email);
+                $('#modalDisplayName').val(data.displayName);
+                $('#modalDni').val(data.dni);
+                $('#modalEstado').val(data.estado);
+                $('#modalTipo').val(data.tipo);
+        
+                // Guardar el ID del usuario en un atributo del botón de guardar
+                $('#guardarCambios').data('userid', data.key);
+            });
+
+            $('#usersTable').on('click', 'button.eliminar', function() {
+                var data = table.row($(this).parents('tr')).data();
+          
+                // Obtener el ID del usuario a eliminar
+                var usuarioId = data.key;
+          
+                // Mostrar SweetAlert2 para confirmar la eliminación
+                Swal.fire({
+                  title: '¿Estás seguro?',
+                  text: "¡No podrás revertir esto!",
+                  icon: 'warning',
+                  showCancelButton: true,
+                  confirmButtonColor: '#3085d6',
+                  cancelButtonColor: '#d33',
+                  confirmButtonText: 'Sí, eliminarlo!'
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    // Eliminar el usuario de Firebase
+                    usersRef.child(usuarioId).remove()
+                      .then(function() {
+                        console.log("Usuario eliminado correctamente.");
+                        // Mostrar mensaje de éxito con SweetAlert2
+                        Swal.fire(
+                          '¡Eliminado!',
+                          'El usuario ha sido eliminado correctamente.',
+                          'success'
+                        );
+                        // Actualizar la tabla después de eliminar el usuario
+                        cargarDatos();
+                      })
+                      .catch(function(error) {
+                        console.error("Error al eliminar el usuario:", error);
+                        // Mostrar mensaje de error con SweetAlert2
+                        Swal.fire(
+                          '¡Error!',
+                          'Ha ocurrido un error al intentar eliminar el usuario.',
+                          'error'
+                        );
+                      });
+                  }
+                });
+            });
+
+            // Guardar cambios desde el modal de edición
+        $('#guardarCambios').click(function() {
+            var usuarioId = $(this).data('userid');
+            var nuevoEmail = $('#modalEmail').val();
+            var nuevoDisplayName = $('#modalDisplayName').val();
+            var nuevoDni = $('#modalDni').val();
+            var nuevoEstado = $('#modalEstado').val();
+            var nuevoTipo = $('#modalTipo').val();
+    
+            // Actualizar datos en Firebase
+            usersRef.child(usuarioId).update({
+            email: nuevoEmail,
+            displayName: nuevoDisplayName,
+            dni: nuevoDni,
+            estado: nuevoEstado,
+            tipo: nuevoTipo
+            }).then(function() {
+            console.log("Usuario actualizado correctamente.");
+            // Cerrar el modal de edición
+            $('#editarModal').modal('hide');
+            // Actualizar la tabla después de editar el usuario
+            cargarDatos();
+            Swal.fire(
+                '¡Editado!',
+                'El usuario ha sido editado correctamente.',
+                'success'
+            );
+            }).catch(function(error) {
+            console.error("Error al actualizar el usuario:", error);
+            // Mostrar mensaje de error con SweetAlert2
+            Swal.fire(
+                '¡Error!',
+                'Ha ocurrido un error al intentar actualizar el usuario.',
+                'error'
+            );
+            });
+        });
+
+
+        // Limpiar campos del modal al cerrar
+        $('#editarModal').on('hidden.bs.modal', function (e) {
+            $('#modalEmail').val('');
+            $('#modalDisplayName').val('');
+            $('#modalDni').val('');
+            $('#modalEstado').val('');
+            $('#modalTipo').val('');
+        });
+
+    });
+    
+    </script>
+    <script src="sesion/sesion_admin.js"></script>
+    
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row min-vh-100">
+            <!-- Barra lateral -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
+                <div class="position-sticky">
+                    <!-- Encabezado del menú -->
+                    <div class="px-3 py-4 d-flex flex-column align-items-center justify-content-center">
+                        <div class="avatar rounded-circle mb-3" style="background-color: #7eaddf; color: #fff; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold;">
+                            <div class="text-light fs-2" id="user_alias">-</div> <!-- Aquí puedes poner las iniciales de tu nombre de usuario -->
+                        </div>
+                        <div class="text-light fs-6" id="username">Nombre de Usuario</div>
+                    </div>                   
+                    <!-- Fin del encabezado -->
+
+                    <!-- Lista de enlaces -->
+                    <div id="menu" class="list-group list-group-flush">
+                        <a class="list-group-item list-group-item-action bg-dark text-white">Cargando...</a>
+                    </div>
+                </div>
+            </nav>
+            
+            
+            <!-- Contenido principal -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-12 content-wrapper">
+                <div class="pt-3 pb-2 mb-3 border-bottom" style="margin-right: 10px; margin-left:10px">
+                    <h1 class="h2">Usuarios</h1>
+                </div>
+                <div class="row" style="margin-right: 10px; margin-left:10px">
+                    <div class="col">
+                        <h6>Lista de usuarios registrados:</h6>
+                        <div class="table-responsive" style="width: 100%;">
+                            <table id="usersTable" class="table table-striped table-bordered text-center align-middle">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">Email</th>
+                                        <th class="text-center">Usuario</th>
+                                        <th class="text-center">Documento</th>
+                                        <th class="text-center">Estado</th>
+                                        <th class="text-center">Tipo</th>
+                                        <th class="text-center">Fecha Registro</th>
+                                        <th class="text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Aquí se insertarán los datos de los usuarios -->
+                                </tbody>
+                            </table>
+                        </div>                        
+                    </div>
+                </div>
+            </main>
+
+            <!-- Modal de Edición -->
+            <div class="modal fade" id="editarModal" tabindex="-1" role="dialog" aria-labelledby="editarModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="editarModalLabel">Editar Usuario</h5>
+                    </div>
+                    <div class="modal-body">
+                    <div class="form-group">
+                        <label for="modalEmail">Email</label>
+                        <input type="email" class="form-control" id="modalEmail" placeholder="Email" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalDisplayName">Nombre</label>
+                        <input type="text" class="form-control" id="modalDisplayName" placeholder="Nombre">
+                    </div>
+                    <div class="form-group">
+                        <label for="modalDisplayName">Documento</label>
+                        <input type="text" class="form-control" id="modalDni" placeholder="Documento">
+                    </div>
+                    <div class="form-group">
+                        <label for="modalDisplayName">Estado</label>
+                        <input type="text" class="form-control" id="modalEstado" placeholder="Estado">
+                    </div>
+                    <div class="form-group">
+                        <label for="modalDisplayName">Tipo Usuario</label>
+                        <input type="text" class="form-control" id="modalTipo" placeholder="Tipo">
+                    </div>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="guardarCambios">Guardar Cambios</button>
+                    </div>
+                </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    <!-- Bootstrap JavaScript y scripts adicionales -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+    
+</body>
+</html>

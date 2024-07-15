@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizar PDF en Nueva Página</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <button id="generatePDF">Visualizar PDF</button>
+
+    <script>
+        document.getElementById('generatePDF').addEventListener('click', function() {
+            // Variables que quieres incluir en el PDF
+            const nombre = "Juan Pérez";
+            const fecha = new Date().toLocaleDateString();
+            const mensaje = "Este es un mensaje personalizado en el PDF.";
+
+            // Crear un nuevo documento PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Agregar contenido al PDF
+            doc.text(`Nombre: ${nombre}`, 10, 10);
+            doc.text(`Fecha: ${fecha}`, 10, 20);
+            doc.text(`Mensaje: ${mensaje}`, 10, 30);
+
+            // Obtener el PDF como un Blob
+            const pdfBlob = doc.output('blob');
+
+            // Crear una URL para el Blob
+            const url = URL.createObjectURL(pdfBlob);
+
+            // Abrir una nueva ventana con el PDF
+            window.open(url, '_blank');
+
+            // Liberar el objeto URL creado
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>

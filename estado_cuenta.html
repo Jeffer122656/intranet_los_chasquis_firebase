@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado de Cuenta</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Estilos personalizados -->
+    <!-- Firebase SDK y scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10.15.7/dist/sweetalert2.min.css">
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10.15.7/dist/sweetalert2.all.min.js"></script>
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css">
+    <link rel="stylesheet" type="text/css"
+        href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.dataTables.css">
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/responsive.dataTables.js"></script>
+
+    <script src="config.js"></script>
+    <script src="menu/menu.js"></script>
+    <script>
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        // Referencia a la base de datos de Firebase
+        const database = firebase.database();
+        const usersRef = database.ref('users');
+        const estadoRef = database.ref('estadoCuentas');
+    </script>
+
+    <script src="sesion/sesion_estado.js"></script>
+
+    <style>
+
+.user-profile {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+}
+
+.section-title {
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+}
+
+.profile-card {
+    background-color: #fff;
+    border: 1px solid #e3e3e3;
+    border-radius: 8px;
+    padding: 30px;
+}
+
+.info-item {
+    margin-bottom: 25px;
+}
+
+.info-label {
+    font-weight: bold;
+    margin-right: 10px;
+    color: #555;
+}
+
+.info-value {
+    color: #333;
+}
+
+.date-range {
+    display: flex;
+    align-items: center;
+}
+
+.date-separator {
+    margin: 0 10px;
+    font-weight: bold;
+    color: #777;
+}
+
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row min-vh-100">
+            <!-- Barra lateral -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
+                <div class="position-sticky">
+                    <!-- Encabezado del menú -->
+                    <div class="px-3 py-4 d-flex flex-column align-items-center justify-content-center">
+                        <div class="avatar rounded-circle mb-3" style="background-color: #7eaddf; color: #fff; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold;">
+                            <div class="text-light fs-2" id="user_alias">-</div> <!-- Aquí puedes poner las iniciales de tu nombre de usuario -->
+                        </div>
+                        <div class="text-light fs-6" id="username">Nombre de Usuario</div>
+                    </div> 
+                    <!-- Fin del encabezado -->
+
+                    <!-- Lista de enlaces -->
+                    <div id="menu" class="list-group list-group-flush">
+                        <a class="list-group-item list-group-item-action bg-dark text-white">Cargando...</a>
+                    </div>
+                </div>
+            </nav>
+
+
+            <!-- Contenido principal -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+                <div class="pt-3 pb-2 mb-3 border-bottom">
+                    <h4 class="h2">Historial</h4>
+                </div>
+            
+                <div class="user-profile">
+                    <h2 class="section-title">Estado de cuenta "Mercado Los Chasquis"</h2>
+                    <div class="profile-card">
+                        <div class="profile-info">
+                            <div class="info-item">
+                                <span class="info-label">Documento:</span>
+                                <span class="info-value" id="documentoUsuario">Cargando...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Puesto:</span>
+                                <span class="info-value" id="puestoUsuario">Cargando...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Nombres Completos:</span>
+                                <span class="info-value" id="nombresCompletos">Cargando...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Fechas de inicio / fin de contrato:</span>
+                                <div class="date-range">
+                                    <span class="info-value" id="fechaInicio">Cargando...</span>
+                                    <span class="date-separator">-</span>
+                                    <span class="info-value" id="fechaFin">Cargando...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </main>
+            
+            
+
+        </div>
+    </div>
+    <!-- Bootstrap JavaScript y scripts adicionales -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+        
+    <script>
+        // Al cargar el documento
+        $(document).ready(function () {
+            
+            
+        });
+        
+      </script>
+
+</body>
+
+</html>

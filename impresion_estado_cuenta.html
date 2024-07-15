@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- tus enlaces de estilo y scripts aquí -->
+</head>
+<body>
+    <h1>Página Nueva</h1>
+    <p id="estadoIdDisplay"></p>
+
+    <script>
+        function getQueryParam(param) {
+            var urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        var estadoId = getQueryParam('estadoId');
+
+        if (estadoId) {
+            console.log('Estado ID:', estadoId);
+            document.getElementById('estadoIdDisplay').textContent = 'Estado ID: ' + estadoId;
+            // Aquí puedes realizar las operaciones necesarias con estadoId
+        }
+    </script>
+</body>
+</html>
